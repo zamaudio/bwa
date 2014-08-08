@@ -12,6 +12,8 @@
 #include "utils.h"
 #include "bntseq.h"
 #include "kseq.h"
+#include "utils.h"
+#include "intel_ext.h"
 KSEQ_DECLARE(gzFile)
 
 extern unsigned char nst_nt4_table[256];
@@ -127,10 +129,10 @@ int main_mem(int argc, char *argv[])
 	memset(&aux, 0, sizeof(ktp_aux_t));
 	memset(pes, 0, 4 * sizeof(mem_pestat_t));
 	for (i = 0; i < 4; ++i) pes[i].failed = 1;
-
+	intel_init();
 	aux.opt = opt = mem_opt_init();
 	memset(&opt0, 0, sizeof(mem_opt_t));
-	while ((c = getopt(argc, argv, "1paMCSPVYjk:c:v:s:r:t:R:A:B:O:E:U:w:L:d:T:Q:D:m:I:N:W:x:G:h:y:K:X:H:")) >= 0) {
+	while ((c = getopt(argc, argv, "XpaMCSPVYjk:c:v:s:r:t:R:A:B:O:E:U:w:L:d:T:Q:D:m:I:N:W:x:G:h:y:K:X:H:")) >= 0) {
 		if (c == 'k') opt->min_seed_len = atoi(optarg), opt0.min_seed_len = 1;
 		else if (c == '1') no_mt_io = 1;
 		else if (c == 'x') mode = optarg;
@@ -147,6 +149,7 @@ int main_mem(int argc, char *argv[])
 		else if (c == 'S') opt->flag |= MEM_F_NO_RESCUE;
 		else if (c == 'Y') opt->flag |= MEM_F_SOFTCLIP;
 		else if (c == 'V') opt->flag |= MEM_F_REF_HDR;
+		else if (c == 'X') opt->flag |= MEM_F_FASTEXT;
 		else if (c == 'c') opt->max_occ = atoi(optarg), opt0.max_occ = 1;
 		else if (c == 'd') opt->zdrop = atoi(optarg), opt0.zdrop = 1;
 		else if (c == 'v') bwa_verbose = atoi(optarg);
@@ -260,6 +263,7 @@ int main_mem(int argc, char *argv[])
 		fprintf(stderr, "                     pacbio: -k17 -W40 -r10 -A1 -B1 -O1 -E1 -L0  (PacBio reads to ref)\n");
 		fprintf(stderr, "                     ont2d: -k14 -W20 -r10 -A1 -B1 -O1 -E1 -L0  (Oxford Nanopore 2D-reads to ref)\n");
 		fprintf(stderr, "                     intractg: -B9 -O16 -L5  (intra-species contigs to ref)\n");
+//		fprintf(stderr, "                     pbread: -k13 -W40 -c1000 -r10 -A1 -B1 -O1 -E1 -N25 -FeaD.001\n");
 		fprintf(stderr, "\nInput/output options:\n\n");
 		fprintf(stderr, "       -p            smart pairing (ignoring in2.fq)\n");
 		fprintf(stderr, "       -R STR        read group header line such as '@RG\\tID:foo\\tSM:bar' [null]\n");
