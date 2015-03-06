@@ -365,7 +365,6 @@ int main_mem(int argc, char *argv[])
 		kseq_destroy(aux.ks2);
 		err_gzclose(fp2); kclose(ko2);
 	}
-	intel_destroy();
 	return 0;
 }
 
