@@ -16,7 +16,9 @@
 #include "ksort.h"
 #include "utils.h"
 
-#include "intel_ext.h"
+#ifndef NOOPT
+#  include "intel_ext.h"
+#endif
 
 #ifdef USE_MALLOC_WRAPPERS
 #  include "malloc_wrap.h"
@@ -722,11 +724,13 @@ void mem_chain2aln(const mem_opt_t *opt, const bntseq_t *bns, const uint8_t *pac
 			tmp = s->rbeg - rmax[0];
 			rs = malloc(tmp);
 			for (i = 0; i < tmp; ++i) rs[i] = rseq[tmp - 1 - i];
+#ifndef NOOPT
 			if (opt->flag & MEM_F_FASTEXT) {
 			    a->score = intel_extend(s->qbeg, qs, tmp, rs, 5, opt->mat, opt->o_del, opt->e_del, aw[0], opt->pen_clip5, opt->zdrop, s->len * opt->a, &qle, &tle, &gtle, &gscore, &max_off[0]);
 			    if (a->score != -1)
 				goto end_left_extend;
 			}
+#endif
 			for (i = 0; i < MAX_BAND_TRY; ++i) {
 				int prev = a->score;
 				aw[0] = opt->w << i;
@@ -757,11 +761,13 @@ end_left_extend:
 			qe = s->qbeg + s->len;
 			re = s->rbeg + s->len - rmax[0];
 			assert(re >= 0);
+#ifndef NOOPT
 			if (opt->flag & MEM_F_FASTEXT) {
 				a->score = intel_extend(l_query - qe, (uint8_t*)query + qe, rmax[1] - rmax[0] - re, rseq + re, 5, opt->mat, opt->o_del, opt->e_del, aw[1], opt->pen_clip3, opt->zdrop, sc0, &qle, &tle, &gtle, &gscore, &max_off[1]);
 				if (a->score != -1)
 				    goto end_right_extend;
 			}
+#endif
 			for (i = 0; i < MAX_BAND_TRY; ++i) {
 				int prev = a->score;
 				aw[1] = opt->w << i;

@@ -1,12 +1,12 @@
 CC=			gcc
 #CC=			clang --analyze
-CFLAGS=		-g -Wall -Wno-unused-function -O2
-CXXFLAGS=	-g -Wall -Wno-unused-variable -O3
+CFLAGS=		-Wall -Wno-unused-function -O3
+CXXFLAGS=	-Wall -Wno-unused-variable -O3
 WRAP_MALLOC=-DUSE_MALLOC_WRAPPERS
 AR=			ar
 DFLAGS=		-DHAVE_PTHREAD $(WRAP_MALLOC)
-LOBJS=		utils.o kthread.o kstring.o ksw.o bwt.o bntseq.o bwa.o bwamem.o bwamem_pair.o bwamem_extra.o malloc_wrap.o intel_ext.o intel_opt/fast_extend_engine.o intel_opt/extend_vec.o \
-			QSufSort.o bwt_gen.o rope.o rle.o is.o bwtindex.o
+LOBJS=		utils.o kthread.o kstring.o ksw.o bwt.o bntseq.o bwa.o bwamem.o bwamem_pair.o \
+		bwamem_extra.o malloc_wrap.o QSufSort.o bwt_gen.o rope.o rle.o is.o bwtindex.o
 AOBJS=		bwashm.o bwase.o bwaseqio.o bwtgap.o bwtaln.o bamlite.o \
 			bwape.o kopen.o pemerge.o maxk.o \
 			bwtsw2_core.o bwtsw2_main.o bwtsw2_aux.o bwt_lite.o \
@@ -15,7 +15,6 @@ PROG=		bwa
 INCLUDES=	
 LIBS=		-lm -lz -lpthread
 SUBDIRS=	.
-
 
 ifeq ($(shell uname -s),Linux)
 	LIBS += -lrt
@@ -26,22 +25,31 @@ sed -e 's/\.\([0-9][0-9]\)/\1/g' \
     -e 's/\.\([0-9]\)/0\1/g' \
     -e 's/^[0-9]\{3,4\}$$/&00/' )
 
-AVX2_SUPPORTED:=$(shell $(CC) check_avx2_support.c -o check_avx2_support.o ; ./check_avx2_support.o | grep Yes)
+AVX2_SUPPORTED:=$(shell $(CC) check_avx2_support.c -o check_avx2_support ; ./check_avx2_support | grep Yes)
 
 ifeq "$(CC)" "gcc"
-ifeq "$(AVX2_SUPPORTED)" "Yes"
-ifeq "$(shell expr $(COMPILER_VER) \>= 40901)" "1"
-$(info AVX2 Supported and GCC >= 4.9.1 detected, enabling Intel optimizations with AVX2.)
-DFLAGS += -DUSE_AVX2
-CXXFLAGS += -mavx2
-else
-$(info AVX2 Supported but GCC <= 4.9.1 detected, enabling Intel optimizations with SSE4.)
-CXXFLAGS += -msse4.2
-endif
-else
-$(info AVX2 Not Supported, enabling Intel optimizations with SSE4.)
-CXXFLAGS += -msse4.2
-endif
+ ifndef NOOPT
+  ifeq "$(AVX2_SUPPORTED)" "Yes"
+   ifeq "$(shell expr $(COMPILER_VER) \>= 40901)" "1"
+    $(info AVX2 Supported and GCC >= 4.9.1 detected, enabling Intel optimizations with AVX2.)
+    DFLAGS += -DUSE_AVX2
+    CFLAGS += -mavx -mavx2
+    CXXFLAGS += -mavx -mavx2
+   else
+    $(info AVX2 Supported but GCC <= 4.9.1 detected, enabling Intel optimizations with SSE4.)
+    CFLAGS += -msse -msse2 -mssse3 -msse4 -msse4.1 -msse4.2
+    CXXFLAGS += -msse -msse2 -mssse3 -msse4 -msse4.1 -msse4.2
+   endif
+  else
+   $(info AVX2 Not Supported, enabling Intel optimizations with SSE4.)
+   CFLAGS += -msse -msse2 -mssse3 -msse4 -msse4.1 -msse4.2
+   CXXFLAGS += -msse -msse2 -mssse3 -msse4 -msse4.1 -msse4.2
+  endif
+  AOBJS += intel_ext.o intel_opt/fast_extend_engine.o intel_opt/extend_vec.o
+ else
+  $(info NOOPT defined, not compiling intel-extend version.)
+  DFLAGS += -DNOOPT
+ endif
 endif
 
 
@@ -57,7 +65,7 @@ endif
 all:$(PROG)
 
 bwa: libbwa.a $(AOBJS) main.o
-		$(CXX) -g $(DFLAGS) $(AOBJS) main.o -o $@ -L. -lbwa $(LIBS)
+		$(CXX) $(DFLAGS) $(AOBJS) main.o -o $@ -L. -lbwa $(LIBS)
 
 bwamem-lite:libbwa.a example.o
 		$(CXX) $(DFLAGS) example.o -o $@ -L. -lbwa $(LIBS)
@@ -73,9 +81,6 @@ clean:
 
 depend:
 	( LC_ALL=C ; export LC_ALL; makedepend -Y -- $(CFLAGS) $(DFLAGS) -- *.c *.cpp )
-
-#avx2_check: check_avx2_support.c
-#		gcc check_avx2_support.c -o check_avx2_support.o
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
@@ -125,6 +130,8 @@ rope.o: rle.h rope.h
 utils.o: utils.h ksort.h malloc_wrap.h kseq.h
 ed_intrav.o: ed_intrav64.h ed_intrav64x2.h ed_intrav.h ed_intravED.h
 ed_intrav.o: ed_fine.h
+ifndef NOOPT
 intel_opt/fast_extend_engine.o: intel_opt/fast_extend.h 
 intel_opt/extend_vec.o: intel_opt/extend_vec128.h intel_opt/extend_vec128x2.h intel_opt/extend_vec256.h intel_opt/extend_vec256x2.h
 intel_ext.o: intel_ext.h
+endif

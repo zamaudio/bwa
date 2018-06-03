@@ -4,7 +4,11 @@
 #include "utils.h"
 
 #ifndef PACKAGE_VERSION
-#define PACKAGE_VERSION "0.7.13-r1126-intel-extend"
+#  ifndef NOOPT
+#    define PACKAGE_VERSION "0.7.13-r1126-intel-extend"
+#  else
+#    define PACKAGE_VERSION "0.7.13-r1126"
+#  endif
 #endif
 
 int bwa_fa2pac(int argc, char *argv[]);

@@ -13,7 +13,9 @@
 #include "bntseq.h"
 #include "kseq.h"
 #include "utils.h"
-#include "intel_ext.h"
+#ifndef NOOPT
+#  include "intel_ext.h"
+#endif
 KSEQ_DECLARE(gzFile)
 
 extern unsigned char nst_nt4_table[256];
@@ -224,9 +226,11 @@ int main_mem(int argc, char *argv[])
 			if (bwa_verbose >= 3)
 				fprintf(stderr, "[M::%s] mean insert size: %.3f, stddev: %.3f, max: %d, min: %d\n",
 						__func__, pes[1].avg, pes[1].std, pes[1].high, pes[1].low);
+#ifndef NOOPT
 		} else if (c == 'f') { 
 		    opt->flag |= MEM_F_FASTEXT;
 		    intel_init();
+#endif
 		} else return 1;
 	}
 
@@ -253,7 +257,9 @@ int main_mem(int argc, char *argv[])
 		fprintf(stderr, "       -m INT        perform at most INT rounds of mate rescues for each read [%d]\n", opt->max_matesw);
 		fprintf(stderr, "       -S            skip mate rescue\n");
 		fprintf(stderr, "       -P            skip pairing; mate rescue performed unless -S also in use\n");
-		fprintf(stderr, "       -f           Use Intel's filter and extend \n");
+#ifndef NOOPT
+		fprintf(stderr, "       -f            Use Intel's filter and extend \n");
+#endif
 		fprintf(stderr, "\nScoring options:\n\n");
 		fprintf(stderr, "       -A INT        score for a sequence match, which scales options -TdBOELU unless overridden [%d]\n", opt->a);
 		fprintf(stderr, "       -B INT        penalty for a mismatch [%d]\n", opt->b);
