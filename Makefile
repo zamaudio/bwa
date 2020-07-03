@@ -1,6 +1,6 @@
-CC=			gcc
+CC?=			gcc
 #CC=			clang --analyze
-CFLAGS=		-g -Wall -Wno-unused-function -O2
+CFLAGS=		-g -Wall -Wno-unused-function -O3 -msse -msse2 -msse3 -mssse3 -msse4 -msse4.1
 WRAP_MALLOC=-DUSE_MALLOC_WRAPPERS
 AR=			ar
 DFLAGS=		-DHAVE_PTHREAD $(WRAP_MALLOC)
@@ -12,7 +12,7 @@ AOBJS=		bwashm.o bwase.o bwaseqio.o bwtgap.o bwtaln.o bamlite.o \
 			bwtsw2_chain.o fastmap.o bwtsw2_pair.o
 PROG=		bwa
 INCLUDES=	
-LIBS=		-lm -lz -lpthread
+LIBS=		-lm -lz -lpthread -static-libgcc
 SUBDIRS=	.
 
 ifeq ($(shell uname -s),Linux)
